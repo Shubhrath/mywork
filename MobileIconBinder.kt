@@ -143,12 +143,10 @@ object MobileIconBinder {
 
                     // Set the icon for the triangle using staticSignalIconRes
                     launch {
-                        viewModel.staticSignalIconRes.distinctUntilChanged().collect { iconResId ->
+                        // Removed .distinctUntilChanged() as staticSignalIconRes is a StateFlow
+                        viewModel.staticSignalIconRes.collect { iconResId ->
                             // Logging the change of resource ID can be verbose.
                             // The visual change will be apparent.
-                            // If detailed logging of the resource ID is needed, a custom logger method
-                            // in the ViewModel or a specific logger call here would be required.
-                            // For now, relying on existing contentDescription log for semantic state.
                             if (iconResId != 0) {
                                 iconView.setImageResource(iconResId)
                             } else {
@@ -158,18 +156,17 @@ object MobileIconBinder {
                         }
                     }
 
-                    // The original viewModel.icon flow (which emits SignalIconModel) is used for contentDescription.
-                    // This provides the semantic information for accessibility.
+                    // Collect contentDescription directly from the viewModel
                     launch {
-                        viewModel.icon.distinctUntilChanged().collect { iconModel ->
-                            // Log the SignalIconModel which contains the semantic state
-                            viewModel.verboseLogger?.logBinderReceivedSignalIcon(
+                        viewModel.contentDescription.distinctUntilChanged().collect { contentDesc ->
+                            // Log the SignalIconModel (optional, if still needed for verbose logging elsewhere)
+                            // For binding, use the collected contentDesc
+                            viewModel.verboseLogger?.logBinderReceivedContentDescription( // Assuming a logger method like this or adapt
                                 view,
                                 viewModel.subscriptionId,
-                                iconModel,
+                                contentDesc
                             )
-                            // Bind the content description from the semantic model
-                            ContentDescriptionViewBinder.bind(iconModel.contentDescription, view)
+                            ContentDescriptionViewBinder.bind(contentDesc, view)
                         }
                     }
 

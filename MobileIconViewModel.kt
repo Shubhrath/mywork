@@ -236,9 +236,9 @@ private class CarrierBasedSatelliteViewModelImpl(
     override val activityContainerVisible: Flow<Boolean> = flowOf(false)
     override val volteId: Flow<Int> = flowOf(0)
     override val showSignalStrengthIcon: Flow<Boolean> = flowOf(false)
-    override val showSeparateExclamationIcon: StateFlow<Boolean> = flowOf(false)
+    override val showSeparateExclamationIcon: StateFlow<Boolean> = MutableStateFlow(false)
     override val staticSignalIconRes: StateFlow<Int> =
-        flowOf(R.drawable.ic_qs_5bar_signal_0) // Default for satellite
+        MutableStateFlow(R.drawable.ic_qs_5bar_signal_0) // Default for satellite, or 0
 }
 
 /** Terrestrial (cellular) icon. */
@@ -253,7 +253,7 @@ private class CellularIconViewModel(
     scope: CoroutineScope,
 ) : MobileIconViewModelCommon {
 
-    val staticSignalIconRes: StateFlow<Int> =
+    override val staticSignalIconRes: StateFlow<Int> =
         combine(
             iconInteractor.signalLevelIcon,
             iconInteractor.isInService, // For STATE_EMPTY logic
@@ -305,8 +305,8 @@ private class CellularIconViewModel(
         }.stateIn(scope, SharingStarted.WhileSubscribed(), R.drawable.ic_qs_5bar_signal_0) // Initial default
 
     // showSeparateExclamationIcon will use the class's existing icon property
-    val showSeparateExclamationIcon: StateFlow<Boolean> =
-        this.icon // Use the existing icon property from the class
+    override val showSeparateExclamationIcon: StateFlow<Boolean> =
+        iconInteractor.signalLevelIcon // Directly use iconInteractor's flow to avoid initialization order issue
             .map { signalIconModel ->
                 (signalIconModel is SignalIconModel.Cellular && signalIconModel.showExclamationMark)
             }
