@@ -78,7 +78,7 @@ object MobileIconBinder {
         val networkTypeView = view.requireViewById<ImageView>(R.id.mobile_type)
         val networkTypeContainer = view.requireViewById<FrameLayout>(R.id.mobile_type_container)
         val iconView = view.requireViewById<ImageView>(R.id.mobile_signal)
-        val mobileDrawable = SignalDrawable(view.context)
+        // val mobileDrawable = SignalDrawable(view.context) // REMOVED
         val roamingView = view.requireViewById<ImageView>(R.id.mobile_roaming)
         val roamingSpace = view.requireViewById<Space>(R.id.mobile_roaming_space)
         val dotView = view.requireViewById<StatusBarIconView>(R.id.status_bar_dot)
@@ -141,26 +141,35 @@ object MobileIconBinder {
                         }
                     }
 
-                    // Set the icon for the triangle
+                    // Set the icon for the triangle using staticSignalIconRes
                     launch {
-                        viewModel.icon.distinctUntilChanged().collect { icon ->
-                            viewModel.verboseLogger?.logBinderReceivedSignalIcon(
-                                view,
-                                viewModel.subscriptionId,
-                                icon,
-                            )
-                            if (icon is SignalIconModel.Cellular) {
-                                iconView.setImageDrawable(mobileDrawable)
-                                mobileDrawable.level = icon.toSignalDrawableState()
-                            } else if (icon is SignalIconModel.Satellite) {
-                                IconViewBinder.bind(icon.icon, iconView)
+                        viewModel.staticSignalIconRes.distinctUntilChanged().collect { iconResId ->
+                            // Logging the change of resource ID can be verbose.
+                            // The visual change will be apparent.
+                            // If detailed logging of the resource ID is needed, a custom logger method
+                            // in the ViewModel or a specific logger call here would be required.
+                            // For now, relying on existing contentDescription log for semantic state.
+                            if (iconResId != 0) {
+                                iconView.setImageResource(iconResId)
+                            } else {
+                                // If iconResId is 0, clear the ImageView or set a default placeholder
+                                iconView.setImageDrawable(null)
                             }
                         }
                     }
 
+                    // The original viewModel.icon flow (which emits SignalIconModel) is used for contentDescription.
+                    // This provides the semantic information for accessibility.
                     launch {
-                        viewModel.contentDescription.distinctUntilChanged().collect {
-                            ContentDescriptionViewBinder.bind(it, view)
+                        viewModel.icon.distinctUntilChanged().collect { iconModel ->
+                            // Log the SignalIconModel which contains the semantic state
+                            viewModel.verboseLogger?.logBinderReceivedSignalIcon(
+                                view,
+                                viewModel.subscriptionId,
+                                iconModel,
+                            )
+                            // Bind the content description from the semantic model
+                            ContentDescriptionViewBinder.bind(iconModel.contentDescription, view)
                         }
                     }
 

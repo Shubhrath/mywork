@@ -73,6 +73,7 @@ sealed interface SignalIconModel : Diffable<SignalIconModel> {
             if (carrierNetworkChange) {
                 SignalDrawable.getCarrierChangeState(numberOfLevels)
             } else {
+                // Reverted to original: use the actual showExclamationMark value
                 SignalDrawable.getState(level, numberOfLevels, showExclamationMark)
             }
     }
