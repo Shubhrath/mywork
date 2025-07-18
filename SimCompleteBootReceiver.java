@@ -24,24 +24,28 @@ public class SimCompleteBootReceiver extends BroadcastReceiver {
         // Added by Tintin for delete test profile begin
         if((SystemProperties.getInt("sys.ts48.exist", 1) == 1) && !apduSend) {
             Log.d(TAG, "try delete test profile");
-            HandlerThread handlerThread = new HandlerThread("eUiccDelay");
+            final HandlerThread handlerThread = new HandlerThread("eUiccDelay");
             handlerThread.start();
-            Handler eUiccHandler = new Handler(handlerThread.getLooper());
-            eUiccHandler.post(() -> {
-                for(int attempt = 0; attempt < 5; attempt ++) {
-                    if(apduSend) break;
+            final Handler eUiccHandler = new Handler(handlerThread.getLooper());
+            final Runnable runnable = new Runnable() {
+                private int attempt = 0;
+
+                @Override
+                public void run() {
+                    if (apduSend || attempt >= 5) {
+                        handlerThread.quit();
+                        return;
+                    }
                     deleteAnyPreloadProfile(context);
-                    if(!apduSend) {
-                        try {
-                            Thread.sleep(3000);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                            break;
-                        }
+                    attempt++;
+                    if (!apduSend) {
+                        eUiccHandler.postDelayed(this, 3000);
+                    } else {
+                        handlerThread.quit();
                     }
                 }
-                handlerThread.quit();
-            });
+            };
+            eUiccHandler.post(runnable);
         }
         // Added by Tintin for delete test profile end
     }
