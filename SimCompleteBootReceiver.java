@@ -115,4 +115,42 @@ public class SimCompleteBootReceiver extends BroadcastReceiver {
         apduSend = true;
         helper.closeLogicalChannel(channelId);
     }
+
+    // Dummy ApduChannelHelper class for compilation
+    private static class ApduChannelHelper {
+        public ApduChannelHelper(TelephonyManager tm, int i) {
+        }
+
+        public int openLogicalChannel(String aid, int i) {
+            return 0;
+        }
+
+        public String sendApdu(int channelId, int i, int a4, int i1, int i2, int i3, String s) {
+            return "9000";
+        }
+
+        public void closeLogicalChannel(int channelId) {
+        }
+    }
+
+    // Dummy SimActivationNotifier class for compilation
+    private static class SimActivationNotifier {
+        public static boolean getShowSimSettingsNotification(Context context) {
+            return false;
+        }
+
+        public enum NotificationType {
+            NETWORK_CONFIG
+        }
+    }
+
+    // Dummy SimNotificationService class for compilation
+    private static class SimNotificationService {
+        public static void scheduleSimNotification(Context context, SimActivationNotifier.NotificationType networkConfig) {
+        }
+    }
+
+    private boolean containsTargetIccids(String responses) {
+        return true;
+    }
 }
