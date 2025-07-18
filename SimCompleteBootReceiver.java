@@ -181,7 +181,6 @@ public class SimCompleteBootReceiver extends BroadcastReceiver {
 
         int index = 0;
         while ((index = profileData.indexOf(ICCID_FLAG, index)) != -1) {
-.
             int iccidStart = index + ICCID_FLAG.length();
             if (iccidStart + ICCID_LENGTH <= profileData.length()) {
                 String littleEndianIccid = profileData.substring(iccidStart, iccidStart + ICCID_LENGTH);
