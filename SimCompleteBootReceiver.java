@@ -1,3 +1,5 @@
+package com.android.settings.sim.receivers;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -6,9 +8,14 @@ import android.os.HandlerThread;
 import android.os.SystemProperties;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.telephony.IccOpenLogicalChannelResponse;
+
 
 import com.android.settings.sim.SimActivationNotifier;
 import com.android.settings.sim.SimNotificationService;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SimCompleteBootReceiver extends BroadcastReceiver {
     private static final String TAG = "SimCompleteBootReceiver";
@@ -123,8 +130,80 @@ public class SimCompleteBootReceiver extends BroadcastReceiver {
         helper.closeLogicalChannel(channelId);
     }
 
-    private boolean containsTargetIccids(String responses) {
-        // Implement your logic here
-        return true;
+   public class ApduChannelHelper {
+
+        private final TelephonyManager mTelephonyManager;
+        private final int mSlotIndex;
+
+        public ApduChannelHelper(TelephonyManager telephonyManager, int slotIndex) {
+            this.mTelephonyManager = telephonyManager;
+            this.mSlotIndex = slotIndex;
+        }
+
+        public int openLogicalChannel(String aid, int p2) {
+            IccOpenLogicalChannelResponse response =
+                mTelephonyManager.iccOpenLogicalChannelBySlot(mSlotIndex, aid, p2);
+            // Log.d(TAG,"openLogicalChannel, response.getStatus: " + response.getStatus());
+            if (response.getStatus() == IccOpenLogicalChannelResponse.STATUS_NO_ERROR) {
+                return response.getChannel();
+            } else {
+                return -1;
+            }
+        }
+
+        public String sendApdu(int channelId, int cla, int ins, int p1, int p2, int p3, String data) {
+
+            int adjustedCla = cla | channelId;
+            return mTelephonyManager.iccTransmitApduLogicalChannelBySlot(
+            mSlotIndex, channelId, adjustedCla, ins, p1, p2, p3, data
+            );
+        }
+
+        public boolean closeLogicalChannel(int channelId) {
+            return mTelephonyManager.iccCloseLogicalChannelBySlot(mSlotIndex, channelId);
+        }
+    }
+
+    public static boolean containsTargetIccids(String profileData) {
+        final String TARGET_ICCID_1 = "89000123456789012341";
+        final String TARGET_ICCID_2 = "89019990001234567893";
+
+        List<String> allIccids = extractAndConvertAllIccids(profileData);
+        // Log.d(TAG,"allITAGccids: " + allIccids);
+        return allIccids.contains(TARGET_ICCID_1) ||
+               allIccids.contains(TARGET_ICCID_2);
+    }
+
+    private static List<String> extractAndConvertAllIccids(String profileData) {
+        List<String> iccids = new ArrayList<>();
+        final String ICCID_FLAG = "5A0A";
+        final int ICCID_LENGTH = 20;
+
+        int index = 0;
+        while ((index = profileData.indexOf(ICCID_FLAG, index)) != -1) {
+.
+            int iccidStart = index + ICCID_FLAG.length();
+            if (iccidStart + ICCID_LENGTH <= profileData.length()) {
+                String littleEndianIccid = profileData.substring(iccidStart, iccidStart + ICCID_LENGTH);
+                String standardIccid = convertLittleEndianIccidToStandard(littleEndianIccid);
+                iccids.add(standardIccid);
+            }
+            index = iccidStart + ICCID_LENGTH;
+        }
+        return iccids;
+    }
+
+    private static String convertLittleEndianIccidToStandard(String littleEndianHex) {
+
+        StringBuilder standardIccid = new StringBuilder();
+        for (int i = 0; i < littleEndianHex.length(); i += 2) {
+            if(i + 1 < littleEndianHex.length()) {
+                standardIccid.append(littleEndianHex.charAt(i+1))
+                             .append(littleEndianHex.charAt(i));
+            } else {
+                standardIccid.append(littleEndianHex.charAt(i));
+            }
+        }
+        return standardIccid.toString();
     }
 }
