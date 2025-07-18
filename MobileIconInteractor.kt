@@ -624,11 +624,12 @@ class MobileIconInteractorImpl(
         }
 
     private val satelliteIcon: Flow<SignalIconModel.Satellite> =
-        shownLevel.map {
+        combine(shownLevel, numberOfLevels) { level, numLevels ->
             SignalIconModel.Satellite(
-                level = it,
+                level = level,
+                numberOfLevels = numLevels,
                 icon =
-                    SatelliteIconModel.fromSignalStrength(it)
+                    SatelliteIconModel.fromSignalStrength(level)
                         ?: SatelliteIconModel.fromSignalStrength(0)!!
             )
         }

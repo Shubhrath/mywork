@@ -83,6 +83,7 @@ sealed interface SignalIconModel : Diffable<SignalIconModel> {
      */
     data class Satellite(
         override val level: Int,
+        val numberOfLevels: Int,
         val icon: Icon.Resource,
     ) : SignalIconModel {
         override fun logPartial(prevVal: SignalIconModel, row: TableRowLogger) {
@@ -90,12 +91,14 @@ sealed interface SignalIconModel : Diffable<SignalIconModel> {
                 logFull(row)
             } else {
                 if (prevVal.level != level) row.logChange(COL_LEVEL, level)
+                if (prevVal.numberOfLevels != numberOfLevels) {
+                    row.logChange(COL_NUM_LEVELS, numberOfLevels)
+                }
             }
         }
 
         override fun logFully(row: TableRowLogger) {
-            // Satellite icon has only 3 levels, unchanging
-            row.logChange(COL_NUM_LEVELS, "3")
+            row.logChange(COL_NUM_LEVELS, numberOfLevels)
             row.logChange(COL_TYPE, "s")
             row.logChange(COL_LEVEL, level)
         }
