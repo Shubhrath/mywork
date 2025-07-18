@@ -122,4 +122,9 @@ public class SimCompleteBootReceiver extends BroadcastReceiver {
         apduSend = true;
         helper.closeLogicalChannel(channelId);
     }
+
+    private boolean containsTargetIccids(String responses) {
+        // Implement your logic here
+        return true;
+    }
 }
